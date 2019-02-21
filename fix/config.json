@@ -1,0 +1,21 @@
+{
+    "url": "https://ok.nodebb.xyz",
+    "port": "8080",
+    "database": "redis",
+    "redis": {
+        "host": "172.30.15.163",
+        "port": "6379",
+        "password": "EALVcfrkU5xJ2wed",
+        "database": "0"
+    },
+    "admin" : {
+        "username": "admin", 
+        "password": "admin"
+    },
+    "admin__password" : "matma",
+    "admin:username": "adminUsername", 
+    "admin:password": "adminPassword", 
+    "admin:password:confirm": "adminPassword",
+    "admin:email": "your@email.com",
+    "secret": "chuc8ban-4mot-ngay-vui4-ben1gia2dinh"
+}

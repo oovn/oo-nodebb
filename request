@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+rm -rf NodeBB
+
+curl -L https://github.com/NodeBB/NodeBB/tarball/master | tar xz
+mv NodeBB-* NodeBB
+
+cp ok/package.json NodeBB/package.json
+#tar cvfz ok/build.tar.xz NodeBB/build
+tar xvfz ok/build.tar.xz NodeBB/build

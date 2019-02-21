@@ -1,0 +1,44 @@
+{
+  "name": "oo-nodebb",
+  "license": "GPL-3.0",
+  "description": "Ok NodeBB Forum",
+  "version": "1.11.2",
+  "homepage": "http://ok.nodebb.xyz",
+  "main": "NodeBB/app.js",
+  "scripts": {
+    "install": "./request",
+    "start": "npm run setup",
+    "setup": "database=redis redis__database=0 admin__password=matma1908 node NodeBB/app --setup",
+    "dev": "./NodeBB/nodebb upgrade && ./NodeBB/nodebb dev",
+    "ok": "./NodeBB/nodebb upgrade && node NodeBB/loader.js --no-daemon --no-silent"
+  },
+  "dependencies": {
+    "less": "^3.9.0"
+  },
+  "devDependencies": {
+    "nyc": "^13.3.0"
+  },
+  "engines": {
+    "node": "*",
+    "npm": "*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oovn/oo-nodebb"
+  },
+  "bugs": {
+    "url": "https://github.com/NodeBB/NodeBB/issues"
+  },
+  "maintainers": [
+    {
+      "name": "yzazy",
+      "email": "yzazy@nodebb.xyz",
+      "url": "https://github.com/yzazy"
+    },
+    {
+      "name": "binhbat",
+      "email": "binhbat@nodebb.xyz",
+      "url": "https://github.com/binhbat"
+    }
+  ]
+}

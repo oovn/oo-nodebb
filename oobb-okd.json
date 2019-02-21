@@ -1,0 +1,312 @@
+{
+   "kind": "Template",
+   "apiVersion": "v1",
+   "metadata": {
+      "name": "oobb",
+      "annotations": {
+         "openshift.io/display-name": "oobb",
+         "description": "An example oobb application with no database. For more information\nabout using this template, including OpenShift considerations, see https://github.com/oovn/oobb/blob/master/README.md.",
+         "tags": "quickstart,nodejs",
+         "iconClass": "icon-nodejs",
+         "openshift.io/long-description": "This template defines resources needed to develop\na NodeJS application, including a build configuration and application deployment\nconfiguration.  It does not include a database.",
+         "openshift.io/provider-display-name": "Red Hat, Inc.",
+         "openshift.io/documentation-url": "https://github.com/oovn/oobb",
+         "openshift.io/support-url": "https://access.redhat.com",
+         "template.openshift.io/bindable": "false"
+      }
+   },
+   "message": "The following service(s) have been created in your project: ${NAME}.\n\nFor more information about using this template, including OpenShift considerations, see https://github.com/oovn/oobb/blob/master/README.md.",
+   "labels": {
+      "template": "oobb",
+      "app": "oobb"
+   },
+   "objects": [
+      {
+         "apiVersion": "v1",
+         "kind": "PersistentVolumeClaim",
+         "metadata": {
+            "name": "${NAME}-pvc"
+         },
+         "spec": {
+            "accessModes": [
+               "ReadWriteOnce"
+            ],
+            "resources": {
+               "requests": {
+                  "storage": "${VOLUME_CAPACITY}"
+               }
+            }
+         }
+      },
+      {
+         "kind": "Service",
+         "apiVersion": "v1",
+         "metadata": {
+            "name": "${NAME}",
+            "annotations": {
+               "description": "Exposes and load balances the application pods"
+            }
+         },
+         "spec": {
+            "ports": [
+               {
+                  "name": "web",
+                  "port": 8080,
+                  "targetPort": 4567
+               }
+            ],
+            "selector": {
+               "name": "${NAME}"
+            }
+         }
+      },
+      {
+         "kind": "Route",
+         "apiVersion": "v1",
+         "metadata": {
+            "name": "${NAME}"
+         },
+         "spec": {
+            "host": "${APPLICATION_DOMAIN}",
+            "to": {
+               "kind": "Service",
+               "name": "${NAME}"
+            }
+         }
+      },
+      {
+         "kind": "ImageStream",
+         "apiVersion": "v1",
+         "metadata": {
+            "name": "${NAME}",
+            "annotations": {
+               "description": "Keeps track of changes in the application image"
+            }
+         }
+      },
+      {
+         "kind": "BuildConfig",
+         "apiVersion": "v1",
+         "metadata": {
+            "name": "${NAME}",
+            "annotations": {
+               "description": "Defines how to build the application",
+               "template.alpha.openshift.io/wait-for-ready": "true"
+            }
+         },
+         "spec": {
+            "source": {
+               "type": "Git",
+               "git": {
+                  "uri": "${SOURCE_REPOSITORY_URL}",
+                  "ref": "${SOURCE_REPOSITORY_REF}"
+               },
+               "contextDir": "${CONTEXT_DIR}"
+            },
+            "strategy": {
+               "type": "Source",
+               "sourceStrategy": {
+                  "from": {
+                     "kind": "ImageStreamTag",
+                     "namespace": "${NAMESPACE}",
+                     "name": "nodejs:${NODEJS_VERSION}"
+                  },
+                  "env": []
+               }
+            },
+            "output": {
+               "to": {
+                  "kind": "ImageStreamTag",
+                  "name": "${NAME}:latest"
+               }
+            },
+            "postCommit": {
+               "script": "npm start"
+            },
+            "triggers": [
+               {
+                  "type": "ImageChange"
+               },
+               {
+                  "type": "ConfigChange"
+               },
+               {
+                  "type": "GitHub",
+                  "github": {
+                     "secret": "${GITHUB_WEBHOOK_SECRET}"
+                  }
+               },
+               {
+                  "type": "Generic",
+                  "generic": {
+                     "secret": "${GENERIC_WEBHOOK_SECRET}"
+                  }
+               }
+            ]
+         }
+      },
+      {
+         "kind": "DeploymentConfig",
+         "apiVersion": "v1",
+         "metadata": {
+            "name": "${NAME}",
+            "annotations": {
+               "description": "Defines how to deploy the application server",
+               "template.alpha.openshift.io/wait-for-ready": "true"
+            }
+         },
+         "spec": {
+            "strategy": {
+               "type": "Rolling"
+            },
+            "triggers": [
+               {
+                  "type": "ImageChange",
+                  "imageChangeParams": {
+                     "automatic": true,
+                     "containerNames": [
+                        "oobb"
+                     ],
+                     "from": {
+                        "kind": "ImageStreamTag",
+                        "name": "${NAME}:latest"
+                     }
+                  }
+               },
+               {
+                  "type": "ConfigChange"
+               }
+            ],
+            "replicas": 1,
+            "selector": {
+               "name": "${NAME}"
+            },
+            "template": {
+               "metadata": {
+                  "name": "${NAME}",
+                  "labels": {
+                     "name": "${NAME}"
+                  }
+               },
+               "spec": {
+                  "containers": [
+                     {
+                        "name": "oobb",
+                        "image": " ",
+                        "ports": [
+                           {
+                              "containerPort": 8080
+                           }
+                        ],
+                        "env": [
+                           {
+                              "name": "NPM_RUN",
+                              "value": "${NPM_RUN_DEPLOY}"
+                           }
+                        ],
+                        "resources": {
+                           "limits": {
+                              "memory": "${MEMORY_LIMIT}"
+                           }
+                        },
+                        "volumeMounts": [
+                           {
+                              "mountPath": "/opt/app-root/src/NodeBB/public/uploads",
+                              "name": "${NAME}-data"
+                           }
+                        ]
+                     }
+                  ],
+                  "volumes": [
+                     {
+                        "name": "${NAME}-data",
+                        "persistentVolumeClaim": {
+                           "claimName": "${NAME}-pvc"
+                        }
+                     }
+                  ]
+               }
+            }
+         }
+      }
+   ],
+   "parameters": [
+      {
+         "name": "NAME",
+         "displayName": "Name",
+         "description": "The name assigned to all of the frontend objects defined in this template.",
+         "required": true,
+         "value": "oobb"
+      },
+      {
+         "name": "NAMESPACE",
+         "displayName": "Namespace",
+         "description": "The OpenShift Namespace where the ImageStream resides.",
+         "required": true,
+         "value": "openshift"
+      },
+      {
+         "name": "NODEJS_VERSION",
+         "displayName": "Version of NodeJS Image",
+         "description": "Version of NodeJS image to be used (6,8,10 or latest).",
+         "value": "latest",
+         "required": true
+      },
+      {
+         "name": "MEMORY_LIMIT",
+         "displayName": "Memory Limit",
+         "description": "Maximum amount of memory the container can use. e.g. 512Mi, 2Gi.",
+         "required": true,
+         "value": "1Gi"
+      },
+      {
+         "name": "SOURCE_REPOSITORY_URL",
+         "displayName": "Git Repository URL",
+         "description": "The URL of the repository with your application source code.",
+         "required": true,
+         "value": "https://github.com/oovn/nodebb19x"
+      },
+      {
+         "name": "SOURCE_REPOSITORY_REF",
+         "displayName": "Git Reference",
+         "description": "Set this to a branch name, tag or other ref of your repository if you\nare not using the default branch."
+      },
+      {
+         "name": "CONTEXT_DIR",
+         "displayName": "Context Directory",
+         "description": "Set this to the relative path to your project if it is not in the root\nof your repository."
+      },
+      {
+         "name": "APPLICATION_DOMAIN",
+         "displayName": "Application Hostname",
+         "description": "The exposed hostname that will route to the oobb service, if left\nblank a value will be defaulted.",
+         "value": ""
+      },
+      {
+         "name": "GITHUB_WEBHOOK_SECRET",
+         "displayName": "GitHub Webhook Secret",
+         "description": "Github trigger secret.  A difficult to guess string encoded as part\nof the webhook URL.  Not encrypted.",
+         "generate": "expression",
+         "from": "[a-zA-Z0-9]{40}"
+      },
+      {
+         "name": "GENERIC_WEBHOOK_SECRET",
+         "displayName": "Generic Webhook Secret",
+         "description": "A secret string used to configure the Generic webhook.",
+         "generate": "expression",
+         "from": "[a-zA-Z0-9]{40}"
+      },
+      {
+         "name": "NPM_RUN_DEPLOY",
+         "displayName": "deploy type dev or ok",
+         "description": "dev la develop , ok la release",
+         "value": "dev"
+      },
+      {
+         "description": "Volume space available for data, e.g. 512Mi, 2Gi.",
+         "name": "VOLUME_CAPACITY",
+         "value": "10Gi",
+         "required": true
+      }
+   ]
+}
